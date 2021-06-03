@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+
+<body style="background-color: black;">
+</body>
+
+<script type="module">
+
+
+import { OrbitControls } from 'https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js';
+
+
+
+    // Find the latest version by visiting https://cdn.skypack.dev/three.
+    //SETUP THE THREEJS WINDOW
+    import * as THREE from 'https://cdn.skypack.dev/three@0.129.0';
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1,1000)
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    document.body.appendChild(renderer.domElement)
+    const controls = new OrbitControls(camera, renderer.domElement)
+    //CREATE VARIABLES
+    var cubeAmount = 1000
+    var cubeList = []
+    var speed = 2
+    var range = 10;
+    var minScale = 5
+    var maxScale = 15;
+    var maxMoveTime = 1250
+    var minZ = -20
+    var maxZ = 50
+    
+    //Function to Create A Cube
+    //Takes X,Y,Z Positions
+    //Takes scaleX & scaleY 
+    function createCube(scaleX,scaleY,scaleZ,color){
+        
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial( { color: parseInt('0x'+color,16) } );
+        const cube = new THREE.Mesh( geometry, material );
+        cube.scale.x = scaleX
+        cube.scale.y = scaleY
+        cube.scale.z = scaleZ
+        return cube;
+
+    }
+    function getRandomInt(min,max){
+        return Math.random() * (max - min) + min; 
+    }
+    var color1 = Math.floor(Math.random()*16777215).toString(16)
+        var color2  = Math.floor(Math.random()*16777215).toString(16);
+    for(var i = 0; i < cubeAmount;i++){
+ 
+        var xScale = getRandomInt(minScale,maxScale)
+        var yScale = getRandomInt(minScale,maxScale)
+        var zScale = getRandomInt(minScale,maxScale)
+
+        if(i%2 == 0){
+            cubeList.push(createCube(xScale,yScale,zScale, color1))
+
+        }else{
+            cubeList.push(createCube(xScale,yScale,zScale, color2))
+
+        }
+        scene.add( cubeList[i] )
+    }
+
+    
+    camera.position.z = 155
+
+  
+
+    function animate() {
+    for(var i = 0;i<cubeList.length;i++){
+        cubeList[i].position.y += 5
+        cubeList[i].position.x += 10 
+        if(cubeList[i].position.y > 550 ||cubeList[i].position.x > 550){
+
+            cubeList[i].position.x = (i*0.5)/10
+            cubeList[i].position.y = (i+2)*2
+            cubeList[i].position.z = i
+
+            // cubeList[i].scale.x = i
+            // cubeList[i].scale.y = i
+            // cubeList[i].scale.z = i
+            
+        }
+    }
+   
+	requestAnimationFrame( animate );
+	renderer.render( scene, camera );
+}
+animate();
+
+  </script>
+
+
+</html>
