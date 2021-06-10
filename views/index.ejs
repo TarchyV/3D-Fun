@@ -6,11 +6,10 @@
 
 <body style="background-color: black;">
 </body>
-
+<script src="/js/perlin.js"></script>
 <script type="module">
 
 
-import { OrbitControls } from 'https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js';
 
 
 
@@ -22,75 +21,165 @@ import { OrbitControls } from 'https://cdn.skypack.dev/three@0.129.0/examples/js
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(renderer.domElement)
-    const controls = new OrbitControls(camera, renderer.domElement)
+   import { PointerLockControls } from 'https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/PointerLockControls'
+   
+   const controls = new PointerLockControls( camera, renderer.domElement );
+   document.addEventListener("mousedown",function(){
+    controls.lock()
+
+   })
+
+
     //CREATE VARIABLES
-    var cubeAmount = 1000
+    var chunkSize = 25
+
+    var gravity = 0.02
+    var maxHeight = 30
+    var scale = 50
+    var yValue = 0.65
+    var r; var b; var g;
     var cubeList = []
-    var speed = 2
-    var range = 10;
-    var minScale = 5
-    var maxScale = 15;
-    var maxMoveTime = 1250
-    var minZ = -20
-    var maxZ = 50
+    var playerPos = {
+        x:2,
+        y:0,
+        z:2,
+    }
+    var colorList = [
+        0x10C135,0x25963E,0x0B9ED2
+    ]
+    const movementSpeed = 0.2;
+
+    setCubePositions(0)
+
+
+function setCubePositions(startPos){
     
+    for(var i = startPos; i < chunkSize + startPos;i+= 1){
+        var x = i;
+        for(var j = 0; j < chunkSize;j+= 1){
+            var z = j
+            var n = PerlinNoise.noise(scale*x,yValue,scale*z)
+            r = g = b = Math.round(255*n)
+            cubeList.push(createCube(x,z,n))
+        }
+    }
+    drawCubes(startPos)
+
+}
+
+
+
+
+
     //Function to Create A Cube
     //Takes X,Y,Z Positions
     //Takes scaleX & scaleY 
-    function createCube(scaleX,scaleY,scaleZ,color){
+    function createCube(posX,posZ,posY){
         
         const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshBasicMaterial( { color: parseInt('0x'+color,16) } );
+        var color;
+        if(posY > 0.5){
+         color = colorList[0]
+        }else
+            if(posY < 0.5){
+            color = colorList[2]
+        
+        }else{
+            color = colorList[1]
+        }
+    
+        
+        const material = new THREE.MeshBasicMaterial( { color: color } );
         const cube = new THREE.Mesh( geometry, material );
-        cube.scale.x = scaleX
-        cube.scale.y = scaleY
-        cube.scale.z = scaleZ
+        cube.scale.x = 1
+        cube.scale.y = 1
+        cube.scale.z = 1
+        cube.position.x = posX; cube.position.y = posY; cube.position.z = posZ
         return cube;
 
     }
     function getRandomInt(min,max){
         return Math.random() * (max - min) + min; 
     }
-    var color1 = Math.floor(Math.random()*16777215).toString(16)
-        var color2  = Math.floor(Math.random()*16777215).toString(16);
-    for(var i = 0; i < cubeAmount;i++){
  
-        var xScale = getRandomInt(minScale,maxScale)
-        var yScale = getRandomInt(minScale,maxScale)
-        var zScale = getRandomInt(minScale,maxScale)
-
-        if(i%2 == 0){
-            cubeList.push(createCube(xScale,yScale,zScale, color1))
-
-        }else{
-            cubeList.push(createCube(xScale,yScale,zScale, color2))
-
-        }
-        scene.add( cubeList[i] )
-    }
 
     
-    camera.position.z = 155
+    camera.position.z = 2
+    camera.position.y = 5
+    camera.position.x = 2
 
-  
-
-    function animate() {
-    for(var i = 0;i<cubeList.length;i++){
-        cubeList[i].position.y += 5
-        cubeList[i].position.x += 10 
-        if(cubeList[i].position.y > 550 ||cubeList[i].position.x > 550){
-
-            cubeList[i].position.x = (i*0.5)/10
-            cubeList[i].position.y = (i+2)*2
-            cubeList[i].position.z = i
-
-            // cubeList[i].scale.x = i
-            // cubeList[i].scale.y = i
-            // cubeList[i].scale.z = i
+    function drawCubes(startPos){
+        for(var i = startPos; i < cubeList.length;i++){
             
+            
+            scene.add(cubeList[i])
+
         }
     }
-   
+
+
+    document.addEventListener("keydown", onKeyDown, false)
+    function onKeyDown(event){
+        
+        //FORWARD
+        if(event.which == 87){
+        camera.translateZ(-movementSpeed)
+        playerPos.x = camera.position.x
+        playerPos.z = camera.position.z
+        }
+        //BACK
+        if(event.which == 83){
+        camera.translateZ(movementSpeed)
+        playerPos.x = camera.position.x
+        playerPos.z = camera.position.z
+        }
+        //RIGHT
+        if(event.which == 68){
+        camera.translateX(movementSpeed)    
+        playerPos.x = camera.position.x
+        playerPos.z = camera.position.z
+        }
+
+        //LEFT
+        if(event.which == 65){
+        camera.translateX(-movementSpeed)  
+        playerPos.x = camera.position.x
+        playerPos.z = camera.position.z      
+        }
+        console.log(playerPos.x)
+        console.log(chunkSize - 5)
+        if(playerPos.x >= (chunkSize - 5) || playerPos.z >= (chunkSize - 5)){
+            console.log('i run')
+                
+                setCubePositions(chunkSize)
+                
+            }
+    }
+
+
+
+
+    var grounded = false
+    function animate() {
+        if(!grounded){
+        camera.position.y -= gravity
+        }
+        for(var i = 0; i < cubeList.length;i++){
+            if(  Math.abs(camera.position.x - cubeList[i].position.x) < 1 &&Math.abs(camera.position.y - cubeList[i].position.y) < 1 &&Math.abs(camera.position.z - cubeList[i].position.z) < 1)
+            {
+                grounded = true
+
+
+            }
+            if(  Math.abs(camera.position.x - cubeList[i].position.x) < 1 &&Math.abs(camera.position.y - cubeList[i].position.y) > 1.5 &&Math.abs(camera.position.z - cubeList[i].position.z) < 1)
+            {
+                grounded = false
+            
+            }
+           
+
+        }
+
 	requestAnimationFrame( animate );
 	renderer.render( scene, camera );
 }
